@@ -116,28 +116,4 @@ open Fake.Core.TargetOperators
     ==> "InstallClient"
     ==> "Run"
 
-//Target.runOrDefaultWithArguments "Build"
-
-
-
-open Fake.IO.Globbing.Operators
-
-
-Target.create "Clean2" (fun _ ->
-    !! "src/**/bin"
-    ++ "src/**/obj"
-    |> Shell.cleanDirs
-)
-
-Target.create "Build2" (fun _ ->
-    !! "src/**/*.*proj"
-    |> Seq.iter (DotNet.build id)
-)
-
-Target.create "All" ignore
-
-"Clean2"
-  ==> "Build2"
-  ==> "All"
-
-Target.runOrDefault "All"
+Target.runOrDefaultWithArguments "Build"

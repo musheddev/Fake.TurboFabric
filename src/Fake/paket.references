@@ -1,0 +1,5 @@
+FSharp.Core
+Fake.IO.FileSystem
+Fake.Core.Target
+Fake.DotNet.Cli
+Microsoft.ServiceFabric.Client.Http
