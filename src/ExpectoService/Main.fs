@@ -3,15 +3,10 @@
 open System
 open System.Threading
 open Microsoft.ServiceFabric.Services.Runtime
-open Microsoft.ServiceFabric.Services.Communication.Runtime
-open Microsoft.ServiceFabric.Services.Communication.AspNetCore
 
-open System
 open System.Threading.Tasks
 open System.Diagnostics.Tracing
-open System.Diagnostics.Tracing
 open System.Diagnostics
-open System.Threading
 
 [<RequireQualifiedAccess>]
 module ServiceEventSource =
@@ -69,26 +64,68 @@ module ServiceEventSource =
 
     let Message message = current.Message(message)
 
+module Tests =
+
+    open Expecto
+
+    [<Tests>]
+    let tests =
+      testList "samples" [
+        testCase "universe exists (╭ರᴥ•́)" <| fun _ ->
+          let subject = true
+          Expect.isTrue subject "I compute, therefore I am."
+
+        testCase "when true is not (should fail)" <| fun _ ->
+          let subject = false
+          Expect.isTrue subject "I should fail because the subject is false"
+
+        testCase "I'm skipped (should skip)" <| fun _ ->
+          Tests.skiptest "Yup, waiting for a sunny day..."
+
+        testCase "I'm always fail (should fail)" <| fun _ ->
+          Tests.failtest "This was expected..."
+
+        testCase "contains things" <| fun _ ->
+          Expect.containsAll [| 2; 3; 4 |] [| 2; 4 |]
+                             "This is the case; {2,3,4} contains {2,4}"
+
+        testCase "contains things (should fail)" <| fun _ ->
+          Expect.containsAll [| 2; 3; 4 |] [| 2; 4; 1 |]
+                             "Expecting we have one (1) in there"
+
+        testCase "Sometimes I want to ༼ノಠل͟ಠ༽ノ ︵ ┻━┻" <| fun _ ->
+          Expect.equal "abcdëf" "abcdef" "These should equal"
+
+        test "I am (should fail)" {
+          "╰〳 ಠ 益 ಠೃ 〵╯" |> Expect.equal true false
+        }
+      ]
+
+
 module Main =
 
-    type ParameterService(ctx) =
+    type ExpectoService(ctx) =
         inherit StatelessService(ctx)
 
-        override this.CreateServiceInstanceListeners() =
-             [| ServiceInstanceListener(fun serviceContext ->
-                        KestrelCommunicationListener(serviceContext, "ServiceEndpoint", fun (url, listener) -> WebHostBuilder().Build() ))
-                         |] |> seq
+        override this.RunAsync(cancel) = Task.CompletedTask
 
+        // override this.CreateServiceInstanceListeners() =
+        //      [| ServiceInstanceListener(fun serviceContext ->
+        //                 KestrelCommunicationListener(serviceContext, "ServiceEndpoint", fun (url, listener) -> WebHostBuilder().Build() ))
+        //                  |] |> seq
+
+        
+    [<Literal>]
+    let Name = "TestIntegrations.Expecto"
 
     [<EntryPoint>]
     let main args =
         try
-            let name = ""
-            ServiceEventSource.Init(name)
-            let t = ServiceRuntime.RegisterServiceAsync(name,Func<Fabric.StatelessServiceContext,StatelessService>(fun ctx -> ParameterService(ctx) :> StatelessService))
+            ServiceEventSource.Init(Name)
+            let t = ServiceRuntime.RegisterServiceAsync(Name,Func<Fabric.StatelessServiceContext,StatelessService>(fun ctx -> ExpectoService(ctx) :> StatelessService))
             t.GetAwaiter().GetResult()
 
-            ServiceEventSource.ServiceTypeRegistered(typeof<ParameterService>.Name)
+            ServiceEventSource.ServiceTypeRegistered(typeof<ExpectoService>.Name)
 
             Thread.Sleep Timeout.Infinite
             0

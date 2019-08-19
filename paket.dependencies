@@ -1,11 +1,14 @@
 source https://api.nuget.org/v3/index.json
 nuget FSharp.Core 4.6.2
 nuget Fake.IO.FileSystem
+nuget Fake.IO.Zip
 nuget Fake.Core.Target
 nuget Fake.DotNet.Cli
 nuget Microsoft.ServiceFabric
 nuget Microsoft.ServiceFabric.Services
+nuget Expecto
 nuget Microsoft.ServiceFabric.Client.Http 2.0.0-preview13
+nuget TaskBuilder.fs 2.1.0
 
 
 group Server
@@ -19,21 +22,6 @@ group Server
     nuget Microsoft.AspNetCore.StaticFiles
     nuget Thoth.Json.Giraffe
 
-group Client
-    source https://api.nuget.org/v3/index.json
-    framework: netstandard2.0
-    storage: none
-
-    nuget Fable.Core ~> 3
-    nuget Fable.Elmish ~> 3
-    nuget Fable.Elmish.Debugger ~> 3
-    nuget Fable.Elmish.HMR ~> 4
-    nuget Fable.Elmish.React ~> 3
-    nuget Thoth.Fetch ~> 1
-    nuget Fable.React ~> 5
-    nuget Fulma ~> 2
-    nuget Fable.FontAwesome.Free ~> 2
-
 group Build
     source https://api.nuget.org/v3/index.json
     framework: netstandard2.0
@@ -43,3 +31,7 @@ group Build
     nuget Fake.Core.Target
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
+    nuget Microsoft.ServiceFabric
+    nuget Microsoft.ServiceFabric.Services
+    nuget Microsoft.ServiceFabric.Client.Http 3.0.0-preview16
+    nuget FSharp.Data
