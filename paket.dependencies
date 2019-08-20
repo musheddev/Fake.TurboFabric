@@ -1,32 +1,16 @@
 version 5.198.0
 source https://api.nuget.org/v3/index.json
-nuget FSharp.Core 4.6.2
-nuget Fake.IO.FileSystem
-nuget Fake.IO.Zip
-nuget Fake.Core.Target
-nuget Fake.DotNet.Cli
+framework: netcoreapp2.1
+
+nuget FSharp.Core
 nuget Microsoft.ServiceFabric
 nuget Microsoft.ServiceFabric.Services
 nuget Expecto
-nuget Microsoft.ServiceFabric.Client.Http 2.0.0-preview13
-
-
-
-group Server
-    source https://api.nuget.org/v3/index.json
-    framework: netcoreapp2.2
-    storage: none
-
-    nuget FSharp.Core
-    nuget Giraffe
-    nuget Microsoft.AspNetCore
-    nuget Microsoft.AspNetCore.StaticFiles
-    nuget Thoth.Json.Giraffe
 
 group Build
     source https://api.nuget.org/v3/index.json
-    framework: netstandard2.0
-    storage: none
+    framework: netcoreapp2.1
+    generate_load_scripts: true
 
     nuget FSharp.Core 4.6.2
     nuget Fake.Core.Target 5.15.0
@@ -35,7 +19,7 @@ group Build
     nuget Fake.IO.FileSystem
     nuget Microsoft.ServiceFabric
     nuget Microsoft.ServiceFabric.Services
-    nuget Microsoft.ServiceFabric.Client.Http 2.0.0-preview13
+    nuget Microsoft.ServiceFabric.Client.Http 3.0.0-preview16
     nuget FSharp.Data
     nuget Fake.IO.Zip
     nuget TaskBuilder.fs 2.1.0

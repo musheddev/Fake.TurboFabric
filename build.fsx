@@ -1,5 +1,6 @@
 #r "paket: groupref build //"
 #load "./.fake/build.fsx/intellisense.fsx"
+//#load "./.paket/load/netcoreapp2.1/Build/build.group.fsx"
 
 #if !FAKE
 #r "netstandard"
@@ -24,10 +25,11 @@ open System.Threading.Tasks
 open System.Collections.Generic
 open System
 open System.Threading
+open System.Management.Automation
 
 let (+/+) = Path.combine
 
-let root = @"C:\Users\Orlando\Desktop\Projects2019\Fake.TurboFabric"
+let root = @"C:\Users\danderegg\Desktop\Projects\Fake.TurboFabric"
 
 
 module TurboFabric =
@@ -37,13 +39,13 @@ module TurboFabric =
     open FSharp.Data
     open System.Xml.Linq
 
-    type Schema = XmlProvider<Schema = "C:\\Users\\Orlando\\Desktop\\Projects2019\\Fake.TurboFabric\\ServiceFabricServiceModel.xsd">
+    type Schema = XmlProvider<Schema = @"C:\Users\danderegg\Desktop\Projects\Fake.TurboFabric\ServiceFabricServiceModel.xsd">
 
     type AppManifest = Schema.ApplicationManifest
     type ServiceManifest = Schema.ServiceManifest
     type Settings = Schema.Settings
 
-    type ServiceFabricService = 
+    type ServiceFabricService =
         {
             Name : string
             Proj : string
@@ -52,7 +54,7 @@ module TurboFabric =
             Type : string
         }
 
-    type ServiceFabricApplication = 
+    type ServiceFabricApplication =
         {
             Name : string
             Version : string
@@ -67,14 +69,14 @@ module TurboFabric =
             Pass : string
             Name : string
             Thumbprint : string
-        }    
+        }
 
 
     let xName expandedName = XName.Get(expandedName)
     let xElement expandedName content = XElement(xName expandedName, content |> Seq.map (fun v -> v :> obj) |> Seq.toArray) :> obj
     let xAttribute expandedName value = XAttribute(xName expandedName, value) :> obj
 
-    let serviceMani (service : ServiceFabricService) = 
+    let serviceMani (service : ServiceFabricService) =
         xElement "ServiceManifest" [
             xAttribute "Name" service.Name
             xAttribute "Version" service.Version
@@ -95,15 +97,15 @@ module TurboFabric =
                         xElement "Program" ["dotnet"]
                         xElement "Arguments" [service.Dll]
                     ]
-                ]               
+                ]
             ]
             xElement "ConfigPackage" [
                 xAttribute "Name" "Config"
-                xAttribute "Version" service.Version                
+                xAttribute "Version" service.Version
             ]
         ]
 
-    let appMani (application : ServiceFabricApplication) = 
+    let appMani (application : ServiceFabricApplication) =
         xElement "ApplicationManifest" [
             xAttribute "ApplicationManifestName" application.Name
             xAttribute "ApplicationManifestVersion" application.Version
@@ -122,7 +124,7 @@ module TurboFabric =
         xElement "Settings" [
             //xAttribute "xmlns" "http://schemas.microsoft.com/2011/01/fabric"
             //xAttribute "xmlns:xsd" "http://www.w3.org/2001/XMLSchema"
-            //xAttribute "xmlns:xsi" "http://www.w3.org/2001/XMLSchema-instance"            
+            //xAttribute "xmlns:xsi" "http://www.w3.org/2001/XMLSchema-instance"
         ]
 
     let serviceManifest expectoService = serviceMani expectoService :?> XElement |> ServiceManifest
@@ -135,7 +137,7 @@ module TurboFabric =
         Directory.ensure packagePrep
         Directory.ensure (packagePrep +/+ pkg)
         Directory.ensure (packagePrep +/+ pkg +/+ "Config")
-        
+
         settings.XElement.Save(packagePrep +/+ pkg +/+ "Config" +/+ "Settings.xml")
         (serviceManifest application.Services.[0]).XElement.Save(packagePrep  +/+ pkg +/+ "ServiceManifest.xml")
         (applicationManifest application).XElement.Save(packagePrep +/+ "ApplicationManifest.xml")
@@ -151,10 +153,10 @@ module TurboFabric =
         let result =
             DotNet.exec (DotNet.Options.withWorkingDirectory root) "publish" (application.Services.[0].Proj + " -o " + packagePrep +/+ pkg +/+ "Code")
         if result.ExitCode <> 0 then failwithf "'dotnet %s' failed in %s" "publish" root
-    
+
     let zip packagePrep =
         [   "", !! (packagePrep + "/**/*") ]
-        |> Zip.zipOfIncludes "deploy.sfpkg"   
+        |> Zip.zipOfIncludes "deploy.sfpkg"
 
     let getCreds (creds : Creds) ct =
             let clientCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(creds.PfxPath, creds.Pass)
@@ -186,8 +188,6 @@ module TurboFabric =
 module DemoSettings =
     open TurboFabric
     let pkg = "TestPkg"
-
-    let root = @"C:\Users\Orlando\Desktop\Projects2019\Fake.TurboFabric"
     let packagePrep = root +/+ "prep"
 
     let ExpectoService = {
@@ -236,6 +236,24 @@ let runDotNet cmd workingDir =
 //     |> Async.RunSynchronously
 //     |> ignore
 // )
+
+let retCode =
+    ExecProcess
+      (fun info ->
+        info.Name <- "powershell.exe"  // Don't know if you need full path here
+        info.WorkingDirectory <- getBuildParam "BuildRoot"
+        info.Arguments <-
+          [ "-File"; getBuildParam "BuildRoot" + "\DeployScripts\scripts\AdminScripts\VersionUpdateFile.ps1" |> inQuotes;
+            "-path"; getBuildParam "BuildSolutionVersioningConfig" |> inQuotes;
+            "-majorVersion"; getBuildParam "BuildNumberMajor" |> inQuotes;
+            "-minor"; getBuildParam "BuildNumberMinor" |> inQuotes;
+            "-build"; getBuildParam "BuildNumber" |> inQuotes;
+            "-revision"; getBuildParam "BuildNumberRevision" |> inQuotes
+          ] |> separated " "
+      )
+      (TimeSpan.FromMinutes 5.0)
+  if retCode <> 0 then
+    failwith (sprintf "PowerShell exited with non-zero exit code %d" retCode)
 
 
 Target.create "Clean" (fun _ ->
