@@ -1,4 +1,4 @@
-version 5.198.0
+version 5.216.0
 source https://api.nuget.org/v3/index.json
 framework: netcoreapp2.1
 
@@ -9,7 +9,7 @@ nuget Expecto
 
 group Build
     source https://api.nuget.org/v3/index.json
-    framework: netcoreapp2.1
+    framework: netstandard2.0
     generate_load_scripts: true
 
     nuget FSharp.Core 4.6.2
@@ -17,8 +17,6 @@ group Build
     nuget Fake.Core.Targets
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
-    nuget Microsoft.ServiceFabric
-    nuget Microsoft.ServiceFabric.Services
     nuget Microsoft.ServiceFabric.Client.Http 3.0.0-preview16
     nuget FSharp.Data
     nuget Fake.IO.Zip
