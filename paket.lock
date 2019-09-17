@@ -217,7 +217,6 @@ NUGET
       System.Runtime (>= 4.3)
 
 GROUP Build
-GENERATE-LOAD-SCRIPTS: ON
 RESTRICTION: == netcoreapp2.1
 NUGET
   remote: https://api.nuget.org/v3/index.json

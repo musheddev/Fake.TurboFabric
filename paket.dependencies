@@ -6,11 +6,11 @@ nuget FSharp.Core
 nuget Microsoft.ServiceFabric
 nuget Microsoft.ServiceFabric.Services
 nuget Expecto
+version 5.216.0
 
 group Build
     source https://api.nuget.org/v3/index.json
     framework: netcoreapp2.1
-    generate_load_scripts: true
 
     nuget FSharp.Core 4.6.2
     nuget Fake.Core.Target 5.15.0

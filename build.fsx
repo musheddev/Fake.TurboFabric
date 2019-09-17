@@ -327,7 +327,7 @@ Target.create "Build" (fun _ ->
     TurboFabric.zip DemoSettings.packagePrep
 
     let client = TurboFabric.connect DemoSettings.Creds
-    //TurboFabric.push client DemoSettings.packagePrep  DemoSettings.pkg
+    TurboFabric.push client DemoSettings.packagePrep  DemoSettings.pkg
 
     ()
 )
