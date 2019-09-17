@@ -1,6 +1,5 @@
 #r "paket: groupref build //"
 #load "./.fake/build.fsx/intellisense.fsx"
-//#load "./.paket/load/netcoreapp2.1/Build/build.group.fsx"
 
 #if !FAKE
 #r "netstandard"
@@ -29,7 +28,7 @@ open System.Threading
 
 let (+/+) = Path.combine
 
-let root = @"C:\Users\danderegg\Desktop\Projects\Fake.TurboFabric"
+let root = @"C:\Users\Orlando\Desktop\Projects2019\Fake.TurboFabric"
 
 
 module TurboFabric =
@@ -39,7 +38,7 @@ module TurboFabric =
     open FSharp.Data
     open System.Xml.Linq
 
-    type Schema = XmlProvider<Schema = @"C:\Users\danderegg\Desktop\Projects\Fake.TurboFabric\ServiceFabricServiceModel.xsd">
+    type Schema = XmlProvider<Schema = @"C:\Users\Orlando\Desktop\Projects2019\Fake.TurboFabric\ServiceFabricServiceModel.xsd">
 
     type AppManifest = Schema.ApplicationManifest
     type ServiceManifest = Schema.ServiceManifest
