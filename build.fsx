@@ -1,3 +1,4 @@
+open System.Net.Http
 #r "paket: groupref build //"
 #load "./.fake/build.fsx/intellisense.fsx"
 
@@ -37,6 +38,7 @@ module TurboFabric =
     open Microsoft.ServiceFabric.Client.Http
     open FSharp.Data
     open System.Xml.Linq
+    open System.Security.Cryptography.X509Certificates
 
     type Schema = XmlProvider<Schema = @"C:\Users\Orlando\Desktop\Projects2019\Fake.TurboFabric\ServiceFabricServiceModel.xsd">
 
@@ -158,15 +160,20 @@ module TurboFabric =
         |> Zip.zipOfIncludes "deploy.sfpkg"
 
     let getCreds (creds : Creds) ct =
-            let clientCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(creds.PfxPath, creds.Pass)
+            let clientCert = new X509Certificate2(creds.PfxPath, "")
+            printf "cert: %s" clientCert.Thumbprint
             let name = X509Name(creds.Name,creds.Thumbprint)
-            let remoteSecuritySettings = RemoteX509SecuritySettings(List<X509Name>([name]))
+            let remoteSecuritySettings = RemoteX509SecuritySettings(List<string>([creds.Thumbprint]),true)
             Task.FromResult<SecuritySettings>(X509SecuritySettings(clientCert, remoteSecuritySettings))
 
     let connect creds =
+        let handler = new Net.Http.HttpClientHandler()
+        handler.ClientCertificateOptions <- ClientCertificateOption.Manual;
+        handler.ServerCertificateCustomValidationCallback <- Func<HttpRequestMessage,X509Certificate2,X509Chain,Net.Security.SslPolicyErrors,bool>(fun x y z o -> printf "callback"; true)
         let sfClient = ServiceFabricClientBuilder()
                         .UseEndpoints(Uri(creds.Endpoint))
                         .UseX509Security(Func<CancellationToken,Task<SecuritySettings>>(getCreds creds))
+                        .ConfigureHttpClientSettings(handler)
                         .BuildAsync().GetAwaiter().GetResult();
         sfClient
 
@@ -178,10 +185,10 @@ module TurboFabric =
         let ct = CancellationToken()
         let appParams = Dictionary<string, string>()
         let appDesc = Microsoft.ServiceFabric.Common.ApplicationDescription(Microsoft.ServiceFabric.Common.ApplicationName("fabric:/" + ""), appType, "1.0.0", appParams);
-        client.Applications.CreateApplicationAsync(appDesc,Nullable<int64>(),ct)
+        client.Applications.CreateApplicationAsync(appDesc,Nullable<int64>(),ct).GetAwaiter().GetResult();
 
     let provision (client : IServiceFabricClient) appType =
-        client.ApplicationTypes.ProvisionApplicationTypeAsync(Microsoft.ServiceFabric.Common.ProvisionApplicationTypeDescription(appType))
+        client.ApplicationTypes.ProvisionApplicationTypeAsync(Microsoft.ServiceFabric.Common.ProvisionApplicationTypeDescription(appType)).GetAwaiter().GetResult();
 
 
 module DemoSettings =
@@ -205,11 +212,11 @@ module DemoSettings =
     }
 
     let Creds = {
-        Endpoint = @"https://mushed.eastus2.cloudapp.azure.com:19000"
-        PfxPath = @"C:\Users\Orlando\Downloads\mushed-mushed-client-20190820.pfx"
+        Endpoint = @"https://mushed.eastus2.cloudapp.azure.com:19080"
+        PfxPath = @"C:\Users\Orlando\Downloads\mushed-mushed-primary-20190820.pfx"
         Pass = ""
         Name = "mushedclient"
-        Thumbprint = "BA256D31BC18BA647CEFF1498CE7E6FE63400021"
+        Thumbprint = "69881B8DE6036C4792F7518B67768902E26E0F4D"//"BA256D31BC18BA647CEFF1498CE7E6FE63400021"
         //cluster id a6611203-9586-4e9a-996a-447f5dea257c
     }
 
@@ -326,9 +333,14 @@ Target.create "Build" (fun _ ->
     TurboFabric.zip DemoSettings.packagePrep
 
     let client = TurboFabric.connect DemoSettings.Creds
-    TurboFabric.push client DemoSettings.packagePrep  DemoSettings.pkg
+    try 
+        TurboFabric.push client DemoSettings.packagePrep  DemoSettings.pkg
+        TurboFabric.provision client app.Type
+        TurboFabric.start client app.Type app.Name
 
-    ()
+    with
+    | e -> printfn "fail %s --- %s" e.Message e.StackTrace  ; ()
+
 )
 
 Target.create "All" ignore
