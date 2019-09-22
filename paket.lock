@@ -368,6 +368,7 @@ NUGET
       Microsoft.Win32.Registry (>= 4.3)
       System.Collections.Immutable (>= 1.5)
       System.Text.Encoding.CodePages (>= 4.0.1)
+    Microsoft.Diagnostics.Tracing.TraceEvent (2.0.45)
     Microsoft.NETCore.Platforms (2.2.1)
     Microsoft.NETCore.Targets (2.1)
     Microsoft.ServiceFabric.Client.Http (3.0.0-preview16)

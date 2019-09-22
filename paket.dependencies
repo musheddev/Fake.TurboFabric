@@ -20,3 +20,4 @@ group Build
     nuget FSharp.Data
     nuget Fake.IO.Zip
     nuget TaskBuilder.fs 2.1.0
+    nuget Microsoft.Diagnostics.Tracing.TraceEvent

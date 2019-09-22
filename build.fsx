@@ -25,11 +25,22 @@ open System.Threading.Tasks
 open System.Collections.Generic
 open System
 open System.Threading
+open System.Diagnostics.Tracing;
+open Microsoft.Diagnostics.Tracing;
+open Microsoft.Diagnostics.Tracing.Session;
 //open System.Management.Automation
 
 let (+/+) = Path.combine
 
 let root = @"C:\Users\Orlando\Desktop\Projects2019\Fake.TurboFabric"
+
+// let name = "ServiceFabricHttpClient"
+// let guid = "c4766d6f-5414-5d26-48de-873499ff0976"
+// printfn "name: %s, guid: %A" name guid
+// let sn = new TraceEventSession("MySession")
+// do sn.Source.add_AllEvents (fun evt -> printfn "event: %s" evt.EventData.Name)
+// do sn.EnableProvider(name, TraceEventLevel.Verbose) |> ignore
+
 
 
 module TurboFabric =
@@ -167,6 +178,7 @@ module TurboFabric =
             Task.FromResult<SecuritySettings>(X509SecuritySettings(clientCert, remoteSecuritySettings))
 
     let connect creds =
+        
         let handler = new Net.Http.HttpClientHandler()
         handler.ClientCertificateOptions <- ClientCertificateOption.Manual;
         handler.ServerCertificateCustomValidationCallback <- Func<HttpRequestMessage,X509Certificate2,X509Chain,Net.Security.SslPolicyErrors,bool>(fun x y z o -> printf "callback"; true)
@@ -180,6 +192,7 @@ module TurboFabric =
     let push (client : IServiceFabricClient) path storePath =
         let ct = CancellationToken()
         client.ImageStore.UploadApplicationPackageAsync(path,true,storePath,ct).GetAwaiter().GetResult()
+        
 
     let start (client : IServiceFabricClient) appType appName =
         let ct = CancellationToken()
@@ -187,13 +200,18 @@ module TurboFabric =
         let appDesc = Microsoft.ServiceFabric.Common.ApplicationDescription(Microsoft.ServiceFabric.Common.ApplicationName("fabric:/" + ""), appType, "1.0.0", appParams);
         client.Applications.CreateApplicationAsync(appDesc,Nullable<int64>(),ct).GetAwaiter().GetResult();
 
+    let readStore (client : IServiceFabricClient) path =
+        let uploaded = client.ImageStore.GetImageStoreContentAsync(path).GetAwaiter().GetResult()
+        uploaded.StoreFiles |> Seq.iter (fun x -> printfn "%s : %s" x.StoreRelativePath (x.FileVersion.ToString()))
+        
+
     let provision (client : IServiceFabricClient) appType =
         client.ApplicationTypes.ProvisionApplicationTypeAsync(Microsoft.ServiceFabric.Common.ProvisionApplicationTypeDescription(appType)).GetAwaiter().GetResult();
 
 
 module DemoSettings =
     open TurboFabric
-    let pkg = "TestPkg"
+    let pkg = "TestApplicationType"
     let packagePrep = root +/+ "prep"
 
     let ExpectoService = {
@@ -335,12 +353,14 @@ Target.create "Build" (fun _ ->
     let client = TurboFabric.connect DemoSettings.Creds
     try 
         TurboFabric.push client DemoSettings.packagePrep  DemoSettings.pkg
-        TurboFabric.provision client app.Type
+        TurboFabric.readStore client DemoSettings.pkg
+        TurboFabric.provision client DemoSettings.pkg
         TurboFabric.start client app.Type app.Name
 
     with
     | e -> printfn "fail %s --- %s" e.Message e.StackTrace  ; ()
 
+    //do sn.Source.Process() |> ignore
 )
 
 Target.create "All" ignore
